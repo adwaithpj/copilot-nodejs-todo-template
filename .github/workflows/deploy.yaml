@@ -35,14 +35,14 @@ jobs:
         - name: Run Azure CLI script
           run: |
             #create resource group adwaithpj-copilot-nodejs-todo
-            az group create --name adwaithpj-copilot-nodejs-todo --location SouthIndia
+            az group create --name adwaithpj-copilot-nodejs-todo --location southindia
             # create a cosmos db account with default SQL api
             az cosmosdb create --name adwaithpj-copilot-nodejs-todo --resource-group adwaithpj-copilot-nodejs-todo --default-consistency-level Session
             # create a database todos with collections tasks
             az cosmosdb sql database create --account-name adwaithpj-copilot-nodejs-todo --resource-group adwaithpj-copilot-nodejs-todo --name todos
             az cosmosdb sql container create --account-name adwaithpj-copilot-nodejs-todo --resource-group adwaithpj-copilot-nodejs-todo --database-name todos --name tasks --partition-key-path /taskId
             #deploy webapp using node 20 using webapp up
-            az webapp up --name adwaithpj-copilot-nodejs-todo-pj --resource-group adwaithpj-copilot-nodejs-todo --location SouthIndia --runtime "NODE|20-lts" --sku F1 --plan adwaithpj-copilot-nodejs-todo
+            az webapp up --name adwaithpj-copilot-nodejs-todo-pj --resource-group adwaithpj-copilot-nodejs-todo --location southindia --runtime "NODE|20-lts" --sku F1 --plan adwaithpj-copilot-nodejs-todo
             #retrieve cosmos endpoint
             cosmosdb_endpoint=$(az cosmosdb show --name adwaithpj-copilot-nodejs-todo --resource-group adwaithpj-copilot-nodejs-todo --query documentEndpoint --output tsv)
             #retreive cosmos key
