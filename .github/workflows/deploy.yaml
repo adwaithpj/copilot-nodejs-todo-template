@@ -1,0 +1,51 @@
+# This workflow for our node.js 20 app does the following
+# - build the app
+# - login to azure with azure credentials github secret
+# - run azure cli command to deploy
+
+name: Node.js 20 CI/CD
+on:
+  push:
+    branches:
+      - main
+
+  jobs:
+    deploy:
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+
+        - name: Set up Node.js 20
+          uses: actions/setup-node@v2
+          with:
+            node-version: '20.x'
+
+        - name: Install dependencies
+          run: npm install
+
+        - name: Build the app
+          run: npm run build
+
+        - name: Login to Azure
+          uses: azure/login@v1
+          with:
+            creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+        - name: Run Azure CLI script
+          run: |
+            #create resource group adwaithpj-copilot-nodejs-todo
+            az group create --name adwaithpj-copilot-nodejs-todo --location eastus
+            # create a cosmos db account with default SQL api
+            az cosmosdb create --name adwaithpj-copilot-nodejs-todo --resource-group adwaithpj-copilot-nodejs-todo --default-consistency-level Session
+            # create a database todos with collections tasks
+            az cosmosdb sql database create --account-name adwaithpj-copilot-nodejs-todo --resource-group adwaithpj-copilot-nodejs-todo --name todos
+            az cosmosdb sql container create --account-name adwaithpj-copilot-nodejs-todo --resource-group adwaithpj-copilot-nodejs-todo --database-name todos --name tasks --partition-key-path /taskId
+            #deploy webapp using node 20 using webapp up
+            az webapp up --name adwaithpj-copilot-nodejs-todo-pj --resource-group adwaithpj-copilot-nodejs-todo --location eastus --runtime "NODE|20-lts" --sku F1 --plan adwaithpj-copilot-nodejs-todo
+            #retrieve cosmos endpoint
+            cosmosdb_endpoint=$(az cosmosdb show --name adwaithpj-copilot-nodejs-todo --resource-group adwaithpj-copilot-nodejs-todo --query documentEndpoint --output tsv)
+            #retreive cosmos key
+            cosmosdb_key=$(az cosmosdb keys list --name adwaithpj-copilot-nodejs-todo --resource-group adwaithpj-copilot-nodejs-todo --query primaryMasterKey --output tsv)
+            #update webapp settings
+            az webapp config appsettings set --name adwaithpj-copilot-nodejs-todo-pj --resource-group adwaithpj-copilot-nodejs-todo --settings COSMOSDB_ENDPOINT=$cosmosdb_endpoint COSMOSDB_KEY=$cosmosdb_key
